@@ -1666,7 +1666,7 @@ class ThreadActivity : SimpleActivity() {
         }
 
         val dialog = getAlertDialogBuilder()
-            .setTitle("Choose SIM for this message")
+            .setTitle(R.string.choose_sim_for_message)
             .setView(chooserLayout)
             .setNegativeButton(android.R.string.cancel, null)
             .show()
