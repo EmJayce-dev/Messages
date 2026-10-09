@@ -201,7 +201,7 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.joda.time.DateTime
 import java.io.File
-
+import org.fossify.commons.extensions.getAlertDialogBuilder
 class ThreadActivity : SimpleActivity() {
     private var threadId = 0L
     private var currentSIMCardIndex = 0
@@ -1074,6 +1074,8 @@ class ThreadActivity : SimpleActivity() {
 
     @SuppressLint("MissingPermission")
     private fun setupSIMSelector() {
+        availableSIMCards.clear()
+
         val availableSIMs = subscriptionManagerCompat().activeSubscriptionInfoList ?: return
         if (availableSIMs.size > 1) {
             availableSIMs.forEachIndexed { index, subscriptionInfo ->
@@ -1581,24 +1583,42 @@ class ThreadActivity : SimpleActivity() {
 
         updateMessageType()
     }
+    private fun showSimChooser(onSimChosen: (Int) -> Unit) {
+        if (availableSIMCards.isEmpty()) {
+            onSimChosen(SmsManager.getDefaultSmsSubscriptionId())
+            return
+        }
 
+        val simLabels = availableSIMCards
+            .map { it.label }
+            .toTypedArray()
+
+        getAlertDialogBuilder()
+            .setTitle("Choose SIM")
+            .setItems(simLabels) { dialog, which ->
+                val selectedSim = availableSIMCards[which]
+                dialog.dismiss()
+                onSimChosen(selectedSim.subscriptionId)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
     private fun sendMessage() {
         var text = binding.messageHolder.threadTypeMessage.value
         if (text.isEmpty() && getAttachmentSelections().isEmpty()) {
             showErrorToast(getString(org.fossify.commons.R.string.unknown_error_occurred))
             return
         }
-        scrollToBottom()
 
+        scrollToBottom()
         text = removeDiacriticsIfNeeded(text)
 
-        val subscriptionId = availableSIMCards.getOrNull(currentSIMCardIndex)?.subscriptionId
-            ?: SmsManager.getDefaultSmsSubscriptionId()
-
-        if (isScheduledMessage) {
-            sendScheduledMessage(text, subscriptionId)
-        } else if (!confirmGroupMessageSendIfNeeded()) {
-            sendNormalMessage(text, subscriptionId)
+        showSimChooser { subscriptionId ->
+            if (isScheduledMessage) {
+                sendScheduledMessage(text, subscriptionId)
+            } else if (!confirmGroupMessageSendIfNeeded()) {
+                sendNormalMessage(text, subscriptionId)
+            }
         }
     }
 
