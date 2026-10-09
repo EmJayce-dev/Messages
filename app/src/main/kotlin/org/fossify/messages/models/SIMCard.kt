@@ -4,5 +4,6 @@ data class SIMCard(
     val id: Int,
     val subscriptionId: Int,
     val label: String,
+    val number: String,
     val iconTint: Int
 )

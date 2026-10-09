@@ -37,6 +37,8 @@ import android.widget.LinearLayout
 import android.widget.LinearLayout.LayoutParams
 import android.widget.RelativeLayout
 import android.widget.Toast
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -1079,16 +1081,17 @@ class ThreadActivity : SimpleActivity() {
         val availableSIMs = subscriptionManagerCompat().activeSubscriptionInfoList ?: return
         if (availableSIMs.size > 1) {
             availableSIMs.forEachIndexed { index, subscriptionInfo ->
-                var label = subscriptionInfo.displayName?.toString() ?: ""
-                if (subscriptionInfo.number?.isNotEmpty() == true) {
-                    label += " (${subscriptionInfo.number})"
-                }
+                val label = subscriptionInfo.displayName?.toString() ?: ""
+                val number = subscriptionInfo.number ?: ""
+
                 val simCard = SIMCard(
                     index + 1,
                     subscriptionInfo.subscriptionId,
                     label,
+                    number,
                     subscriptionInfo.iconTint
                 )
+
                 availableSIMCards.add(simCard)
             }
 
@@ -1559,25 +1562,121 @@ class ThreadActivity : SimpleActivity() {
 
         updateMessageType()
     }
+    @SuppressLint("MissingPermission")
     private fun showSimChooser(onSimChosen: (Int) -> Unit) {
         if (availableSIMCards.isEmpty()) {
             onSimChosen(SmsManager.getDefaultSmsSubscriptionId())
             return
         }
 
-        val simLabels = availableSIMCards
-            .map { it.label }
-            .toTypedArray()
+        val subscriptionInfoById = subscriptionManagerCompat()
+            .activeSubscriptionInfoList
+            ?.associateBy { it.subscriptionId }
+            .orEmpty()
 
-        getAlertDialogBuilder()
-            .setTitle("Choose SIM")
-            .setItems(simLabels) { dialog, which ->
-                val selectedSim = availableSIMCards[which]
-                dialog.dismiss()
-                onSimChosen(selectedSim.subscriptionId)
+        val mediumMargin =
+            resources.getDimensionPixelSize(org.fossify.commons.R.dimen.medium_margin)
+
+        val iconSize =
+            resources.getDimensionPixelSize(org.fossify.commons.R.dimen.normal_icon_size)
+
+        val chooserLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(mediumMargin, 0, mediumMargin, 0)
+        }
+
+        val rows = ArrayList<View>()
+
+        availableSIMCards.forEach { simCard ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(0, mediumMargin, 0, mediumMargin)
+                isClickable = true
+                isFocusable = true
             }
+
+            val iconView = ImageView(this).apply {
+                val subscriptionInfo = subscriptionInfoById[simCard.subscriptionId]
+
+                if (subscriptionInfo != null) {
+                    setImageBitmap(
+                        subscriptionInfo.createIconBitmap(this@ThreadActivity)
+                    )
+                } else {
+                    setBackgroundColor(simCard.iconTint)
+                }
+
+                scaleType = ImageView.ScaleType.CENTER_INSIDE
+            }
+
+            row.addView(
+                iconView,
+                LayoutParams(iconSize, iconSize)
+            )
+
+            val textContainer = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+            }
+
+            val labelView = TextView(this).apply {
+                text = simCard.label
+                setTextColor(getProperTextColor())
+                setTextSize(
+                    TypedValue.COMPLEX_UNIT_PX,
+                    getTextSize()
+                )
+            }
+
+            textContainer.addView(labelView)
+
+            if (simCard.number.isNotEmpty()) {
+                val numberView = TextView(this).apply {
+                    text = simCard.number
+                    setTextColor(getProperTextColor())
+                    alpha = 0.7f
+                    setTextSize(
+                        TypedValue.COMPLEX_UNIT_PX,
+                        getTextSize() * 0.85f
+                    )
+                }
+
+                textContainer.addView(numberView)
+            }
+
+            val textParams = LayoutParams(
+                0,
+                LayoutParams.WRAP_CONTENT,
+                1f
+            ).apply {
+                marginStart = mediumMargin
+            }
+
+            row.addView(textContainer, textParams)
+
+            chooserLayout.addView(
+                row,
+                LayoutParams(
+                    LayoutParams.MATCH_PARENT,
+                    LayoutParams.WRAP_CONTENT
+                )
+            )
+
+            rows.add(row)
+        }
+
+        val dialog = getAlertDialogBuilder()
+            .setTitle("Choose SIM for this message")
+            .setView(chooserLayout)
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+
+        rows.forEachIndexed { index, row ->
+            row.setOnClickListener {
+                dialog.dismiss()
+                onSimChosen(availableSIMCards[index].subscriptionId)
+            }
+        }
     }
     private fun sendMessage() {
         var text = binding.messageHolder.threadTypeMessage.value
