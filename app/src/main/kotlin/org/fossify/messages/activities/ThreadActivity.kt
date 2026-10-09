@@ -1083,7 +1083,12 @@ class ThreadActivity : SimpleActivity() {
                 if (subscriptionInfo.number?.isNotEmpty() == true) {
                     label += " (${subscriptionInfo.number})"
                 }
-                val simCard = SIMCard(index + 1, subscriptionInfo.subscriptionId, label)
+                val simCard = SIMCard(
+                    index + 1,
+                    subscriptionInfo.subscriptionId,
+                    label,
+                    subscriptionInfo.iconTint
+                )
                 availableSIMCards.add(simCard)
             }
 
