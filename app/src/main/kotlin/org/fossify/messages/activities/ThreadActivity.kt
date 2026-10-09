@@ -1098,35 +1098,6 @@ class ThreadActivity : SimpleActivity() {
                 return
             }
 
-            currentSIMCardIndex = getProperSimIndex(availableSIMs, numbers)
-            binding.messageHolder.threadSelectSimIcon.applyColorFilter(getProperTextColor())
-            binding.messageHolder.threadSelectSimIcon.beVisible()
-            binding.messageHolder.threadSelectSimNumber.beVisible()
-
-            if (availableSIMCards.isNotEmpty()) {
-                binding.messageHolder.threadSelectSimIcon.setOnClickListener {
-                    currentSIMCardIndex = (currentSIMCardIndex + 1) % availableSIMCards.size
-                    val currentSIMCard = availableSIMCards[currentSIMCardIndex]
-                    @SuppressLint("SetTextI18n")
-                    binding.messageHolder.threadSelectSimNumber.text = currentSIMCard.id.toString()
-                    val currentSubscriptionId = currentSIMCard.subscriptionId
-                    numbers.forEach {
-                        config.saveUseSIMIdAtNumber(it, currentSubscriptionId)
-                    }
-                    toast(currentSIMCard.label)
-                }
-            }
-
-            binding.messageHolder.threadSelectSimNumber.setTextColor(
-                getProperTextColor().getContrastColor()
-            )
-            try {
-                @SuppressLint("SetTextI18n")
-                binding.messageHolder.threadSelectSimNumber.text =
-                    (availableSIMCards[currentSIMCardIndex].id).toString()
-            } catch (e: Exception) {
-                showErrorToast(e)
-            }
         }
     }
 
