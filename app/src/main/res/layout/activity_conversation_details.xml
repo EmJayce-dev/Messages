@@ -100,6 +100,52 @@
                 android:id="@+id/settings_conversation_name_divider"
                 layout="@layout/divider" />
 
+
+            <LinearLayout
+                android:id="@+id/sim_preference_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/sim_preference_heading"
+                    style="@style/SettingsSectionLabelStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sim_preference_heading" />
+
+                <RadioGroup
+                    android:id="@+id/sim_preference_options"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/sim_preference_ask"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="@string/sim_ask_every_time" />
+
+                    <RadioButton
+                        android:id="@+id/sim_preference_one"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="@string/sim_preference_sim_1" />
+
+                    <RadioButton
+                        android:id="@+id/sim_preference_two"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="@string/sim_preference_sim_2" />
+
+                </RadioGroup>
+            </LinearLayout>
+
+
             <TextView
                 android:id="@+id/members_heading"
                 style="@style/SettingsSectionLabelStyle"

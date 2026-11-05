@@ -21,11 +21,13 @@ import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.SimpleContact
+import org.fossify.messages.R
 import org.fossify.messages.adapters.ContactsAdapter
 import org.fossify.messages.databinding.ActivityConversationDetailsBinding
 import org.fossify.messages.dialogs.RenameConversationDialog
 import org.fossify.messages.extensions.config
 import org.fossify.messages.extensions.conversationsDB
+import org.fossify.messages.extensions.getAddresses
 import org.fossify.messages.extensions.getContactFromAddress
 import org.fossify.messages.extensions.getThreadParticipants
 import org.fossify.messages.extensions.messagesDB
@@ -65,6 +67,7 @@ class ConversationDetailsActivity : SimpleActivity() {
                 setupTextViews()
                 setupParticipants()
                 setupCustomNotifications()
+                setupSimPreference()
             }
         }
     }
@@ -176,4 +179,51 @@ class ConversationDetailsActivity : SimpleActivity() {
         }
         binding.participantsRecyclerview.adapter = adapter
     }
+
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun setupSimPreference() {
+        val addresses = participants.getAddresses().distinct()
+
+        val sims = getSystemService(
+            android.telephony.SubscriptionManager::class.java
+        ).activeSubscriptionInfoList.orEmpty()
+
+        if (addresses.size != 1 || sims.size < 2) {
+            binding.simPreferenceSection.beGone()
+            return
+        }
+
+        val address = addresses.first()
+        val sim1 = sims[0]
+        val sim2 = sims[1]
+
+        binding.simPreferenceSection.beVisible()
+
+        binding.simPreferenceOne.text =
+            "${getString(R.string.sim_preference_sim_1)} — ${sim1.displayName}"
+
+        binding.simPreferenceTwo.text =
+            "${getString(R.string.sim_preference_sim_2)} — ${sim2.displayName}"
+
+        val savedSimId = config.getUseSIMIdAtNumber(address)
+
+        val selectedOption = when (savedSimId) {
+            sim1.subscriptionId -> R.id.sim_preference_one
+            sim2.subscriptionId -> R.id.sim_preference_two
+            else -> R.id.sim_preference_ask
+        }
+
+        binding.simPreferenceOptions.check(selectedOption)
+
+        binding.simPreferenceOptions.setOnCheckedChangeListener { _, checkedId ->
+            val newSimId = when (checkedId) {
+                R.id.sim_preference_one -> sim1.subscriptionId
+                R.id.sim_preference_two -> sim2.subscriptionId
+                else -> 0
+            }
+
+            config.saveUseSIMIdAtNumber(address, newSimId)
+        }
+    }
+
 }

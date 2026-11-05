@@ -19,7 +19,18 @@
     <string name="unpin_conversation">Unpin</string>
     <string name="forward_message">Forward</string>
     <string name="compress_error">Unable to compress image to selected size</string>
-    <string name="choose_sim_for_message">Choose SIM for this message</string>    <!-- Attachments -->
+    <string name="choose_sim_for_message">Choose SIM for this message</string>
+    <string name="always_use_sim_for_number">Always use this SIM for this number</string>
+    <string name="sim_preference_heading">SIM preference</string>
+    <string name="sim_ask_every_time">Ask Every Time</string>
+    <string name="sim_preference_sim_1">SIM 1</string>
+    <string name="sim_preference_sim_2">SIM 2</string>
+    <string name="fork_support_title">Support Fossify</string>
+    <string name="fork_support_message">Messages with SIM Prompt is an independent fork of Fossify Messages. The Fossify developers created most of its messaging functionality. If you find this app useful, please consider supporting their work.</string>
+    <string name="fork_support_button">Support Fossify</string>
+
+
+    <!-- Attachments -->
     <string name="duplicate_item_warning">Duplicate item was not included</string>
     <!-- vCard -->
     <plurals name="and_other_contacts">

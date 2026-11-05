@@ -17,11 +17,11 @@ import org.fossify.commons.extensions.appLaunched
 import org.fossify.commons.extensions.appLockManager
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.areSystemAnimationsEnabled
+import org.fossify.commons.extensions.baseConfig
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beGoneIf
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
-import org.fossify.commons.extensions.checkAppSideloading
 import org.fossify.commons.extensions.checkWhatsNew
 import org.fossify.commons.extensions.convertToBitmap
 import org.fossify.commons.extensions.fadeIn
@@ -90,6 +90,8 @@ class MainActivity : SimpleActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+        baseConfig.wasRatePromptShown = true
+        baseConfig.wasDonationPromptShown = true
         appLaunched(BuildConfig.APPLICATION_ID)
         setupOptionsMenu()
         refreshMenuItems()
@@ -100,10 +102,46 @@ class MainActivity : SimpleActivity() {
         clearAllMessagesIfNeeded {
             loadMessages()
         }
+        showForkSupportPromptIfEligible()
+    }
+        private fun showForkSupportPromptIfEligible() {
+            val prefs = getSharedPreferences("emjayce_fork_support", MODE_PRIVATE)
 
-        if (checkAppSideloading()) {
-            return
-        }
+            if (prefs.getBoolean("prompt_shown", false)) {
+                return
+            }
+
+            val now = System.currentTimeMillis()
+            val firstLaunch = prefs.getLong("first_launch_time", 0L)
+
+            if (firstLaunch == 0L) {
+                prefs.edit().putLong("first_launch_time", now).apply()
+                return
+            }
+
+            val sevenDays = 7L * 24 * 60 * 60 * 1000
+
+            if (now - firstLaunch < sevenDays) {
+                return
+            }
+
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.fork_support_title)
+                .setMessage(R.string.fork_support_message)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.fork_support_button) { _, _ ->
+                    val url = android.net.Uri.parse("https://www.fossify.org/donate/")
+                    val intent = android.content.Intent(
+                        android.content.Intent.ACTION_VIEW,
+                        url
+                    )
+                    startActivity(intent)
+                }
+                .setOnDismissListener {
+                    prefs.edit().putBoolean("prompt_shown", true).apply()
+                }
+                .show()
+
     }
 
     override fun onResume() {

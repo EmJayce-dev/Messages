@@ -1508,6 +1508,14 @@ class ThreadActivity : SimpleActivity() {
 
             rows.add(row)
         }
+        val rememberSimCheckbox = android.widget.CheckBox(this).apply {
+            text = getString(R.string.always_use_sim_for_number)
+            setTextColor(getProperTextColor())
+        }
+
+        if (participants.getAddresses().distinct().size == 1) {
+            chooserLayout.addView(rememberSimCheckbox)
+        }
 
         val dialog = getAlertDialogBuilder()
             .setTitle(R.string.choose_sim_for_message)
@@ -1517,8 +1525,15 @@ class ThreadActivity : SimpleActivity() {
 
         rows.forEachIndexed { index, row ->
             row.setOnClickListener {
+                val selectedSimId = availableSIMCards[index].subscriptionId
+                val addresses = participants.getAddresses().distinct()
+
+                if (addresses.size == 1 && rememberSimCheckbox.isChecked) {
+                    config.saveUseSIMIdAtNumber(addresses.first(), selectedSimId)
+                }
+
                 dialog.dismiss()
-                onSimChosen(availableSIMCards[index].subscriptionId)
+                onSimChosen(selectedSimId)
             }
         }
     }
@@ -1532,12 +1547,26 @@ class ThreadActivity : SimpleActivity() {
         scrollToBottom()
         text = removeDiacriticsIfNeeded(text)
 
-        showSimChooser { subscriptionId ->
+        val sendWithChosenSim: (Int) -> Unit = { subscriptionId ->
             if (isScheduledMessage) {
                 sendScheduledMessage(text, subscriptionId)
             } else if (!confirmGroupMessageSendIfNeeded()) {
                 sendNormalMessage(text, subscriptionId)
             }
+        }
+
+        val addresses = participants.getAddresses().distinct()
+
+        val savedSimId = if (addresses.size == 1) {
+            config.getUseSIMIdAtNumber(addresses.first())
+        } else {
+            0
+        }
+
+        if (savedSimId > 0 && availableSIMCards.any { it.subscriptionId == savedSimId }) {
+            sendWithChosenSim(savedSimId)
+        } else {
+            showSimChooser(sendWithChosenSim)
         }
     }
 
